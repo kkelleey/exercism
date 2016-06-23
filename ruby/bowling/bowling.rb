@@ -2,8 +2,8 @@ require 'pry'
 
 class Game
   def initialize
-    @current_frame = 1
-    @frames = Array.new(10) { |index| Frame.new(index + 1) }
+    @current_frame = Frame.new(0)
+    @finished_frames = []
   end
 
   def roll(pins)
@@ -14,29 +14,29 @@ class Game
 
   def score
     raise 'Score cannot be taken until the end of the game' unless game_over?
-    @frames.each.reduce(0) do |a, e|
-      a + e.score(@frames)
-    end
+    @finished_frames.reduce(0) { |a, e| a + e.score(@finished_frames) }
   end
 
   private
 
   def game_over?
-    @frames.last.finished?
+    @finished_frames.length == 10
   end
 
   def add_roll(pins)
-    frame = @frames[@current_frame - 1]
-    frame.add_roll(pins)
-    @current_frame += 1 if frame.finished?
+    @current_frame.add_roll(pins)
+    if @current_frame.finished?
+      @finished_frames << @current_frame
+      @current_frame = Frame.new(@current_frame.index + 1)
+    end
   end
 end
 
 class Frame
-  attr_reader :rolls
+  attr_reader :rolls, :index
 
-  def initialize(number)
-    @number = number
+  def initialize(index)
+    @index = index
     @rolls = []
   end
 
@@ -47,7 +47,7 @@ class Frame
 
   def finished?
     return false if @rolls.empty?
-    if @number == 10
+    if tenth_frame?
       tenth_frame_finished?
     else
       @rolls.length == 2 || strike?
@@ -68,16 +68,20 @@ class Frame
     @rolls.first
   end
 
+  def tenth_frame?
+    @index == 9
+  end
+
   private
 
   def check_pin_count(pins)
-    if first_throw && !strike? && pins + first_throw > 10
-      raise 'Pin count exceeds pins on the lane'
-    end
+    raise 'Pin count exceeds pins on the lane' if pins > remaining_pins
   end
 
-  def tenth_frame?
-    @number == 10
+  def remaining_pins
+    return 10 if @rolls == [10, 10] || spare?
+    return 10 - @rolls[1] if @rolls[1] && strike?
+    10 - @rolls.first.to_i
   end
 
   def strike_score(all_frames)
@@ -86,10 +90,10 @@ class Frame
   end
 
   def next_two_throws(all_frames)
-    next_frame = all_frames[@number]
-    first_throw = next_frame.rolls.first
-    second_throw = if next_frame.strike?
-                     all_frames[@number + 1].rolls.first
+    next_frame = all_frames[@index + 1]
+    first_throw = next_frame.first_throw
+    second_throw = if next_frame.strike? && !next_frame.tenth_frame?
+                     all_frames[@index + 2].first_throw
                    else
                      next_frame.rolls[1]
                    end
@@ -106,16 +110,17 @@ class Frame
 
   def spare_score(all_frames)
     return @rolls.reduce(:+) if tenth_frame?
-    next_frame = all_frames[@number]
-    next_throw = next_frame.rolls.first
+    next_frame = all_frames[@index + 1]
+    next_throw = next_frame.first_throw
     10 + next_throw
   end
 
   def tenth_frame_finished?
-    if strike? || spare?
-      @rolls.length == 3
-    else
-      @rolls.length == 2
-    end
+    return @rolls.length == 3 if strike? || spare?
+    @rolls.length == 2
   end
+end
+
+class BookKeeping
+  VERSION = 1
 end
