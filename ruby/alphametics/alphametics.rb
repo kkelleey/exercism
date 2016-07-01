@@ -1,20 +1,20 @@
-require 'pry'
-
-class Fixnum
-  def operator(other, operator)
-    case operator
-    when '+' then self + other
-    when '*' then self * other
-    end
+class String
+  def to_number(map)
+    gsub(/[a-zA-Z]/, map).to_i
   end
 end
 
 class Alphametics
-  EQUATION_REGEX = /([A-Za-z]+)\s([\+\*])\s(\w+)\s==\s(\w+)/
+  WORD_OPERATOR_REST_REGEX = /
+                              (?<word>[a-zA-Z]+)
+                              \s?
+                              (?<operator>[*+])?
+                              \s?
+                              (?<rest>.+)?
+                            /x
 
   def solve(string)
-    @string = string
-    replace_exponent if @string.include?('^')
+    @string = replace_exponent(string)
 
     (0..9).to_a.combination(uniq_chars.length) do |combination|
       combination.permutation do |permutation|
@@ -42,22 +42,18 @@ class Alphametics
   end
 
   def value_of(string, map)
-    first_word = string[/\w+/]
-    first_operator = string[/[*+]/]
-    return to_number(first_word, map) unless first_operator
-    rest_of_string = string[string.index(first_operator) + 1..-1]
-    value_of_rest_of_string = value_of(rest_of_string, map)
-    to_number(first_word, map).operator(value_of_rest_of_string, first_operator)
+    match = string.strip.match(WORD_OPERATOR_REST_REGEX)
+    value_of_word = match['word'].to_number(map)
+    return value_of_word if match['operator'].nil?
+    value_of_rest_of_string = value_of(match['rest'], map)
+    value_of_word.send(match['operator'], value_of_rest_of_string)
   end
 
-  def replace_exponent
-    word = @string.scan(/(\w+)\s?\^/)[0][0]
-    exponent = @string.scan(/\^\s?(\d)/)[0][0].to_i
-    @string.gsub!(/\w+\s?\^\s?\d/, ([word] * exponent).join(' * '))
-  end
-
-  def to_number(word, map)
-    word.chars.map { |char| map[char].to_s }.join.to_i
+  def replace_exponent(string)
+    return string unless string.include? '^'
+    base = string.scan(/(\w+)\s?\^/)[0][0]
+    exponent = string.scan(/\^\s?(\d)/)[0][0].to_i
+    string.gsub(/\w+\s?\^\s?\d/, ([base] * exponent).join(' * '))
   end
 end
 
