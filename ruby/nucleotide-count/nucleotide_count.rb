@@ -1,24 +1,19 @@
 class Nucleotide
-  EMPTY_HISTOGRAM = {
-    'A' => 0,
-    'T' => 0,
-    'C' => 0,
-    'G' => 0
-  }.freeze
+  NUCLEOTIDES = %w(A T C G).freeze
 
-  def self.from_dna(string)
-    raise ArgumentError if string =~ /[^ATCG]/
-    @string = string
-    self
-  end
+  class << self
+    def from_dna(string)
+      raise ArgumentError if string =~ /[^#{NUCLEOTIDES.join}]/
+      @string = string
+      self
+    end
 
-  def self.count(nucleotide)
-    @string.scan(nucleotide).count
-  end
+    def count(nucleotide)
+      @string.scan(nucleotide).count
+    end
 
-  def self.histogram
-    @string.chars.each_with_object(EMPTY_HISTOGRAM.dup) do |char, histogram|
-      histogram[char] += 1
+    def histogram
+      NUCLEOTIDES.map { |nucleotide| [nucleotide, count(nucleotide)] }.to_h
     end
   end
 end
