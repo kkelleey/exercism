@@ -9,26 +9,23 @@ class Scrabble
     10 => %w(Q Z)
   }.freeze
 
+  LETTER_TO_SCORE_MAP =
+    SCRABBLE_VALUES.each_with_object({}) do |(value, letters), hash|
+      letters.each { |letter| hash[letter] = value }
+    end
+
   def initialize(string)
     @string = string.to_s
   end
 
   def score
-    map = letter_to_score_map
     @string
       .scan(/[[:alpha:]]/)
-      .map { |letter| map[letter.upcase] }.reduce(:+) || 0
+      .map { |letter| LETTER_TO_SCORE_MAP[letter.upcase] }
+      .reduce(:+) || 0
   end
 
   def self.score(string)
     new(string).score
-  end
-
-  private
-
-  def letter_to_score_map
-    SCRABBLE_VALUES.each_with_object({}) do |(value, letters), hash|
-      letters.each { |letter| hash[letter] = value }
-    end
   end
 end
