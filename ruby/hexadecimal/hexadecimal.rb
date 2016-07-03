@@ -19,7 +19,6 @@ class Hexadecimal
   end
 
   def hex_value(char)
-    # char =~ /\d/ ? char.to_i : HEX_VALUES[char.upcase]
     HEX_VALUES.index(char.upcase)
   end
 end
