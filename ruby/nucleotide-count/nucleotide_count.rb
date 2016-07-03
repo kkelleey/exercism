@@ -13,7 +13,7 @@ class Nucleotide
     end
 
     def histogram
-      NUCLEOTIDES.map { |nucleotide| [nucleotide, count(nucleotide)] }.to_h
+      NUCLEOTIDES.each_with_object({}) { |n, h| h[n] = count(n) }
     end
   end
 end
