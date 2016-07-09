@@ -8,9 +8,7 @@ class Queens
   end
 
   def to_s
-    (0..7).each_with_object([]) do |row_index, rows|
-      rows << row_array(row_index).join(' ')
-    end.join("\n")
+    board.map { |row| row.join(' ') }.join("\n")
   end
 
   def attack?
@@ -18,6 +16,20 @@ class Queens
   end
 
   private
+
+  def board
+    Array.new(8) do |row_index|
+      Array.new(8) do |column_index|
+        cell_value(row_index, column_index)
+      end
+    end
+  end
+
+  def cell_value(row, column)
+    return 'W' if [row, column] == @white
+    return 'B' if [row, column] == @black
+    '_'
+  end
 
   def diagonal
     (@white[0] - @black[0]).abs == (@white[1] - @black[1]).abs
@@ -29,17 +41,5 @@ class Queens
 
   def same_column
     @white[1] == @black[1]
-  end
-
-  def row_array(index)
-    (0..7).each_with_object([]) do |column, row_array|
-      row_array << cell_value([index, column])
-    end
-  end
-
-  def cell_value(coordinates)
-    return 'W' if coordinates == @white
-    return 'B' if coordinates == @black
-    '_'
   end
 end
