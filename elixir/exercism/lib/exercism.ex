@@ -1,0 +1,2 @@
+defmodule Exercism do
+end
